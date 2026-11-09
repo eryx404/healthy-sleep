@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Здоровый сон — Математика сна</title>
+    
+    <!-- Настройки веб-приложения (PWA) для смартфонов и Vercel -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Здоровый сон">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1e1b4b">
+
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        
+        /* Шапка с логотипом */
+        header { background: linear-gradient(135deg, #1e1b4b, #312e81); padding: 14px 16px; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); border-bottom: 1px solid rgba(255,255,255,0.1); position: sticky; top: 0; z-index: 50; }
+        header img { width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); object-fit: cover; }
+        .header-text h1 { font-size: 1.25rem; font-weight: 700; color: #fff; letter-spacing: 0.3px; }
+        .header-text p { font-size: 0.75rem; color: var(--accent); margin-top: 2px; }
+
+        /* Основной контейнер */
+        main { flex: 1; padding: 16px; padding-bottom: 90px; max-width: 520px; margin: 0 auto; width: 100%; }
+        .tab-content { display: none; animation: fadeIn 0.25s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Карточки */
+        .card { background: var(--card-bg); border-radius: 16px; padding: 18px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); }
+        .card h2 { font-size: 1.1rem; margin-bottom: 10px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+        .card p { font-size: 0.9rem; line-height: 1.5; color: var(--text-main); margin-bottom: 10px; }
+
+        /* Кнопки */
+        .btn { display: block; width: 100%; padding: 13px 16px; border-radius: 12px; border: none; background: var(--primary); color: white; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 10px; text-align: center; }
+        .btn:active { transform: scale(0.98); background: var(--primary-hover); }
+        .btn-outline { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.15); color: var(--text-main); text-align: left; font-weight: 500; }
+        .btn-outline.correct { background: rgba(34, 197, 94, 0.2); border-color: var(--success); color: #86efac; }
+        .btn-outline.wrong { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: #fca5a5; }
+
+        /* Статистика */
+        .stats-bar { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+        .stat-box { flex: 1; background: rgba(15, 23, 42, 0.75); padding: 10px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
+        .stat-val { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+        .stat-label { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+        /* Переключатель режима */
+        .mode-switch { display: flex; background: #0b1120; border-radius: 12px; padding: 4px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.07); }
+        .mode-btn { flex: 1; padding: 9px; text-align: center; border-radius: 9px; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .mode-btn.active { background: var(--primary); color: #fff; }
+
+        /* Настольная игра */
+        .board-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0; }
+        .cell { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); transition: 0.3s; }
+        .cell.bonus { border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.08); color: #86efac; }
+        .cell.trap { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); color: #fca5a5; }
+        .cell.finish { border-color: var(--warning); background: rgba(234, 179, 8, 0.15); color: #fde047; }
+        .cell.active-player { box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent); transform: scale(1.03); z-index: 2; }
+        .cell-num { position: absolute; top: 4px; left: 6px; font-size: 0.65rem; opacity: 0.6; }
+        .cell-icon { font-size: 1.2rem; margin-top: 6px; }
+        .player-token { position: absolute; bottom: 4px; right: 4px; font-size: 1.1rem; animation: bounce 0.6s infinite alternate; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+
+        /* Калькулятор */
+        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; margin-top: 12px; }
+        select, input[type="time"] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: #0f172a; color: #fff; font-size: 1rem; outline: none; }
+        .calc-result { margin-top: 16px; padding: 14px; border-radius: 12px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); display: none; }
+        .time-badge { display: inline-block; background: var(--primary); color: #fff; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 1.05rem; margin: 5px 6px 5px 0; }
+
+        /* Список памятки */
+        .tip-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .tip-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .tip-icon { font-size: 1.5rem; line-height: 1; }
+        .tip-text h4 { font-size: 0.95rem; color: #fff; margin-bottom: 3px; }
+        .tip-text p { font-size: 0.84rem; color: var(--text-muted); margin: 0; }
+
+        /* Нижняя навигация */
+        nav { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b; display: flex; justify-content: space-around; padding: 8px 0 12px; box-shadow: 0 -4px 15px rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.08); z-index: 100; }
+        .nav-item { background: none; border: none; color: var(--text-muted); font-size: 0.72rem; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; flex: 1; }
+        .nav-item span.icon { font-size: 1.25rem; }
+        .nav-item.active { color: var(--accent); font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<header>
+    <img src="icon.png" alt="Logo" onerror="this.style.display='none'">
+    <div class="header-text">
+        <h1>🌙 Здоровый сон</h1>
+        <p>Проект «Математика сна» • СШГ №1 г. Кокшетау</p>
+    </div>
+</header>
+
+<main>
+    <!-- ВКЛАДКА 1: ОБУЧАЮЩАЯ ИГРА -->
+    <div id="tab-game" class="tab-content active">
+        <div class="mode-switch">
+            <div class="mode-btn active" onclick="switchGameMode('quiz', this)">🧠 Викторина</div>
+            <div class="mode-btn" onclick="switchGameMode('sim', this)">🎮 Симулятор вечера</div>
+        </div>
+
+        <!-- Викторина -->
+        <div id="game-quiz">
+            <div class="stats-bar">
+                <div class="stat-box">
+                    <div class="stat-val" id="q-progress">1 / 8</div>
+                    <div class="stat-label">Вопрос</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-val" id="q-score">0</div>
+                    <div class="stat-label">Очки знаний</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 id="q-title">Вопрос</h2>
+                <p id="q-text">Загрузка...</p>
+                <div id="q-options"></div>
+                <div id="q-feedback" style="margin-top:12px; font-size:0.86rem; display:none; padding:10px; border-radius:8px; background:rgba(255,255,255,0.05);"></div>
+                <button id="q-next" class="btn" style="display:none;" onclick="nextQuestion()">Следующий вопрос ➔</button>
+            </div>
+        </div>
+
+        <!-- Симулятор вечера -->
+        <div id="game-sim" style="display:none;">
+            <div class="stats-bar">
+                <div class="stat-box">
+                    <div class="stat-val" id="sim-time">19:00</div>
+                    <div class="stat-label">Время</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-val" id="sim-melatonin">85%</div>
+                    <div class="stat-label">Мелатонин</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-val" id="sim-energy">65%</div>
+                    <div class="stat-label">Бодрость утром</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 id="sim-title">Собери идеальный вечер</h2>
+                <p id="sim-desc">Принимай правильные решения перед сном, чтобы сохранить мелатонин и проснуться бодрым!</p>
+                <div id="sim-choices"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ВКЛАДКА 2: НАСТОЛЬНАЯ ИГРА «ЗДОРОВЫЙ СОН» -->
+    <div id="tab-board" class="tab-content">
+        <div class="stats-bar">
+            <div class="stat-box">
+                <div class="stat-val" id="b-pos">1 / 16</div>
+                <div class="stat-label">Клетка</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" id="b-dice">🎲 -</div>
+                <div class="stat-label">Кубик</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val" id="b-turns">0</div>
+                <div class="stat-label">Ходов</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🎲 Настольная игра «Здоровый сон»</h2>
+            <p id="b-status">Бросай кубик и дойди от клетки 1 (Вечер) до клетки 16 (Бодрое утро)! Зелёные клетки — полезные привычки (+шаги), красные — ловушки недосыпа (-шаги).</p>
+            
+            <div id="board-grid" class="board-grid"></div>
+
+            <button id="b-roll-btn" class="btn" onclick="rollDice()">🎲 Бросить кубик</button>
+        </div>
+    </div>
+
+    <!-- ВКЛАДКА 3: КАЛЬКУЛЯТОР СНА -->
+    <div id="tab-calc" class="tab-content">
+        <div class="card">
+            <h2>🧮 Калькулятор «Математика сна»</h2>
+            <p>Рассчитай оптимальное время засыпания с учётом возраста подростка, полуторачасовых циклов сна и 15 минут на засыпание.</p>
+            
+            <label for="age-group">Возрастная группа (рекомендации ВОЗ):</label>
+            <select id="age-group">
+                <option value="6">6–7 класс (12–13 лет) — норма 9–11 часов</option>
+                <option value="8" selected>8–9 класс (14–15 лет) — норма 8–10 часов</option>
+                <option value="10">10–11 класс (16–17 лет) — норма 8–9 часов</option>
+            </select>
+
+            <label for="wake-time">Во сколько нужно проснуться в школу?</label>
+            <input type="time" id="wake-time" value="07:00">
+
+            <button class="btn" onclick="calculateSleep()">Рассчитать время отхода ко сну</button>
+
+            <div id="calc-output" class="calc-result"></div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Вывод из нашего исследования</h2>
+            <p style="color:var(--text-muted); font-size:0.85rem;">Опрос 48 учащихся 6-х и 8-х классов показал: 89,5% школьников спят меньше нормы в будни, а 90% тех, кто ложится после 00:00, испытывают постоянную усталость. Те, кто засыпает <b>до 22:30</b>, чувствуют себя утром бодрее и лучше усваивают уроки.</p>
+        </div>
+    </div>
+
+    <!-- ВКЛАДКА 4: ПАМЯТКА И АВТОРЫ -->
+    <div id="tab-info" class="tab-content">
+        <div class="card">
+            <h2>📋 Памятка для учащихся</h2>
+            <div class="tip-item">
+                <div class="tip-icon">📵</div>
+                <div class="tip-text">
+                    <h4>Правило 30–60 минут («Цифровой закат»)</h4>
+                    <p>Убери смартфон за полчаса–час до сна. Синий свет экрана блокирует выработку мелатонина — гормона сна.</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <div class="tip-icon">🌡️</div>
+                <div class="tip-text">
+                    <h4>Микро-проветривание и 18–20 °C</h4>
+                    <p>Даже 5 минут открытого окна перед сном и прохлада 18–20 °C удлиняют фазу глубокого сна.</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <div class="tip-icon">📚</div>
+                <div class="tip-text">
+                    <h4>Приоритет домашнего задания</h4>
+                    <p>Начинай подготовку к урокам с самых сложных заданий днём, чтобы не засиживаться за полночь.</p>
+                </div>
+            </div>
+            <div class="tip-item">
+                <div class="tip-icon">⏰</div>
+                <div class="tip-text">
+                    <h4>Постоянство графика без «джетлага»</h4>
+                    <p>Не пытайся спать по 11–12 часов в выходные — это сбивает биоритмы и вызывает разбитость в понедельник.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🔬 Паспорт научного проекта</h2>
+            <p><b>Тема:</b> «Математика сна: сколько часов сна нужно подростку для здоровья»</p>
+            <p><b>Секция:</b> Математика. Прикладная математика</p>
+            <p><b>Автор:</b> Силенок Анна, 9 класс</p>
+            <p><b>Руководитель:</b> Карасёва Любовь Николаевна, учитель математики</p>
+            <p><b>Учреждение:</b> КГУ «Школа-гимназия №1» г. Кокшетау, 2026 г.</p>
+        </div>
+    </div>
+</main>
+
+<nav>
+    <button class="nav-item active" onclick="openTab('tab-game', this)">
+        <span class="icon">🎮</span>
+        <span>Игра</span>
+    </button>
+    <button class="nav-item" onclick="openTab('tab-board', this)">
+        <span class="icon">🎲</span>
+        <span>Настолка</span>
+    </button>
+    <button class="nav-item" onclick="openTab('tab-calc', this)">
+        <span class="icon">🧮</span>
+        <span>Калькулятор</span>
+    </button>
+    <button class="nav-item" onclick="openTab('tab-info', this)">
+        <span class="icon">📖</span>
+        <span>Памятка</span>
+    </button>
+</nav>
+
+<script>
+    // Навигация по вкладкам
+    function openTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // Переключение между Викториной и Симулятором
+    function switchGameMode(mode, btn) {
+        document.querySelectorAll('.mode-btn').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('game-quiz').style.display = (mode === 'quiz') ? 'block' : 'none';
+        document.getElementById('game-sim').style.display = (mode === 'sim') ? 'block' : 'none';
+        if (mode === 'sim') startSim();
+    }
+
+    // --- 1. ВИКТОРИНА ---
+    const questions = [
+        {
+            q: "Сколько часов сна рекомендуют врачи и ВОЗ для подростков 6–8 классов?",
+            opts: ["6–7 часов", "9–11 часов (6 кл.) и 8–10 часов (8 кл.)", "5–6 часов", "12–13 часов"],
+            ans: 1,
+            info: "Верно! В 12–13 лет норма составляет 9–11 часов, а для старшеклассников — 8–10 часов."
+        },
+        {
+            q: "Какой гормон является «дирижёром» сна и разрушается от света экрана?",
+            opts: ["Адреналин", "Инсулин", "Мелатонин", "Тироксин"],
+            ans: 2,
+            info: "Точно! Синий свет смартфона блокирует выработку мелатонина, затягивая засыпание."
+        },
+        {
+            q: "Какая температура в комнате оптимальна для глубокого сна?",
+            opts: ["18–20 °C", "25–27 °C", "12–14 °C", "Любая выше 24 °C"],
+            ans: 0,
+            info: "Правильно! Оптимальный режим — 18–20 °C и обязательное микро-проветривание перед сном."
+        },
+        {
+            q: "Что такое «социальный джетлаг» у школьников?",
+            opts: ["Общение в соцсетях ночью", "Сбой биоритмов из-за недосыпа в будни и сна по 10–12 ч в выходные", "Смена часового пояса", "Усталость после физкультуры"],
+            ans: 1,
+            info: "Верно! Попытки «отоспаться» в субботу и воскресенье не спасают от усталости, а сбивают биологические часы."
+        },
+        {
+            q: "Какие две главные причины мешают школьникам вовремя лечь спать по данным нашего опроса?",
+            opts: ["Шум на улице и погода", "Домашнее задание (42,1%) и телефон перед сном (42,1%)", "Спортивные секции и ТВ", "Плотный ужин"],
+            ans: 1,
+            info: "В точку! Высокая учебная нагрузка и смартфоны в постели — два главных «пожирателя» сна."
+        },
+        {
+            q: "Что происходит с памятью человека во время сна?",
+            opts: ["Знания стираются", "Консолидация — перенос знаний из кратковременной памяти в долговременную", "Память отключается", "Запоминаются только сны"],
+            ans: 1,
+            info: "Да! Без полноценного сна выученные вечером уроки просто «не сохраняются» в памяти."
+        },
+        {
+            q: "До скольки процентов гормона роста вырабатывается именно во время сна?",
+            opts: ["До 15%", "До 80%", "До 35%", "0%"],
+            ans: 1,
+            info: "Верно! Во время сна вырабатывается до 80% гормона роста, а лимфатическая система очищает мозг от токсинов."
+        },
+        {
+            q: "На сколько минут достаточно сдвинуть режим дня в пользу сна, чтобы заметно повысить средний балл и бодрость?",
+            opts: ["Всего на 5 минут", "На 40–60 минут (отказ от гаджетов перед сном)", "На 5 часов", "Режим не влияет на оценки"],
+            ans: 1,
+            info: "Отлично! Изменение привычек всего на 40–60 минут в пользу сна значительно улучшает успеваемость и самочувствие."
+        }
+    ];
+
+    let curQ = 0, score = 0;
+
+    function loadQuestion() {
+        const q = questions[curQ];
+        document.getElementById('q-progress').innerText = `${curQ + 1} / ${questions.length}`;
+        document.getElementById('q-score').innerText = score;
+        document.getElementById('q-title').innerText = `Вопрос ${curQ + 1}`;
+        document.getElementById('q-text').innerText = q.q;
+        
+        const optsDiv = document.getElementById('q-options');
+        optsDiv.innerHTML = '';
+        q.opts.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-outline';
+            btn.innerText = opt;
+            btn.onclick = () => selectAnswer(idx, btn);
+            optsDiv.appendChild(btn);
+        });
+        document.getElementById('q-feedback').style.display = 'none';
+        document.getElementById('q-next').style.display = 'none';
+    }
+
+    function selectAnswer(idx, btn) {
+        const q = questions[curQ];
+        const allBtns = document.querySelectorAll('#q-options .btn');
+        allBtns.forEach(b => b.disabled = true);
+
+        const fb = document.getElementById('q-feedback');
+        fb.style.display = 'block';
+
+        if (idx === q.ans) {
+            btn.classList.add('correct');
+            score += 10;
+            document.getElementById('q-score').innerText = score;
+            fb.innerHTML = `✅ <b>Правильно!</b> ${q.info}`;
+        } else {
+            btn.classList.add('wrong');
+            allBtns[q.ans].classList.add('correct');
+            fb.innerHTML = `❌ <b>Ошибка.</b> ${q.info}`;
+        }
+        document.getElementById('q-next').style.display = 'block';
+    }
+
+    function nextQuestion() {
+        curQ++;
+        if (curQ < questions.length) {
+            loadQuestion();
+        } else {
+            document.getElementById('q-title').innerText = "🎉 Викторина пройдена!";
+            document.getElementById('q-text').innerText = `Твой результат: ${score} из ${questions.length * 10} баллов. Ты отлично усвоил правила здорового сна!`;
+            document.getElementById('q-options').innerHTML = `<button class="btn" onclick="curQ=0;score=0;loadQuestion();">Пройти заново 🔄</button>`;
+            document.getElementById('q-feedback').style.display = 'none';
+            document.getElementById('q-next').style.display = 'none';
+        }
+    }
+
+    // --- 2. СИМУЛЯТОР ВЕЧЕРА ---
+    const simSteps = [
+        {
+            time: "19:00",
+            title: "Домашнее задание",
+            desc: "Задали сложную математику и лёгкое чтение. Как распределишь время?",
+            choices: [
+                { text: "📐 Начну со сложной математики прямо сейчас", mel: 0, en: +15 },
+                { text: "📱 Посижу в соцсетях, а уроки начну в 23:00", mel: -20, en: -25 }
+            ]
+        },
+        {
+            time: "20:30",
+            title: "Вечерний перекус",
+            desc: "До сна осталось 2 часа. Что выберешь на кухне?",
+            choices: [
+                { text: "🥛 Тёплое молоко / травяной чай без кофеина", mel: +5, en: +10 },
+                { text: "☕ Кофе или энергетик с плотной едой", mel: -20, en: -15 }
+            ]
+        },
+        {
+            time: "21:45",
+            title: "Подготовка спальни",
+            desc: "В спальне тепло (24 °C) и душно. Что сделаешь перед сном?",
+            choices: [
+                { text: "🪟 Проветрю комнату 10 минут (до 19 °C) и закрою шторы", mel: +10, en: +15 },
+                { text: "💡 Оставлю окно закрытым и включу ночник поярче", mel: -15, en: -10 }
+            ]
+        },
+        {
+            time: "22:00",
+            title: "Правило 30 минут",
+            desc: "В 22:30 пора спать, но пришло уведомление из игры.",
+            choices: [
+                { text: "📵 Отложу телефон на зарядку вне кровати", mel: +10, en: +15 },
+                { text: "🎮 Буду играть под одеялом до 00:30", mel: -35, en: -30 }
+            ]
+        }
+    ];
+
+    let simIdx = 0, melatonin = 85, energy = 65;
+
+    function startSim() {
+        simIdx = 0; melatonin = 85; energy = 65;
+        renderSimStep();
+    }
+
+    function renderSimStep() {
+        document.getElementById('sim-melatonin').innerText = Math.max(0, Math.min(100, melatonin)) + "%";
+        document.getElementById('sim-energy').innerText = Math.max(0, Math.min(100, energy)) + "%";
+
+        if (simIdx >= simSteps.length) {
+            document.getElementById('sim-time').innerText = "07:00";
+            document.getElementById('sim-title').innerText = energy >= 80 ? "☀️ Отличное бодрое утро!" : "😴 Утренняя разбитость...";
+            document.getElementById('sim-desc').innerText = energy >= 80 
+                ? `Ты выспался на ${Math.min(100, energy)}%! Мозг провёл консолидацию памяти, и на контрольной по математике ты легко решишь все задачи.`
+                : `Твоя бодрость всего ${Math.max(0, energy)}%. Из-за позднего засыпания и синего света мелатонин упал, и на первом уроке тебя клонит в сон.`;
+            document.getElementById('sim-choices').innerHTML = `<button class="btn" onclick="startSim()">Сыграть ещё раз 🔄</button>`;
+            return;
+        }
+
+        const step = simSteps[simIdx];
+        document.getElementById('sim-time').innerText = step.time;
+        document.getElementById('sim-title').innerText = step.title;
+        document.getElementById('sim-desc').innerText = step.desc;
+
+        const chDiv = document.getElementById('sim-choices');
+        chDiv.innerHTML = '';
+        step.choices.forEach(c => {
+            const b = document.createElement('button');
+            b.className = 'btn btn-outline';
+            b.innerText = c.text;
+            b.onclick = () => {
+                melatonin += c.mel;
+                energy += c.en;
+                simIdx++;
+                renderSimStep();
+            };
+            chDiv.appendChild(b);
+        });
+    }
+
+    // --- 3. НАСТОЛЬНАЯ ИГРА «ЗДОРОВЫЙ СОН» ---
+    const boardCells = [
+        { id: 1, icon: "🌆", label: "Старт" },
+        { id: 2, icon: "📐", label: "ДЗ вовремя", type: "bonus", jump: 2, msg: "Ты сделал сложные уроки днём! Переход на +2 клетки вперёд." },
+        { id: 3, icon: "🚶", label: "Прогулка" },
+        { id: 4, icon: "☕", label: "Кофе на ночь", type: "trap", jump: -2, msg: "Кофеин вечером мешает уснуть! Откат на 2 клетки назад." },
+        { id: 5, icon: "🪟", label: "18–20 °C", type: "bonus", jump: 2, msg: "Микро-проветривание спальни! +2 клетки вперёд." },
+        { id: 6, icon: "📖", label: "Книга" },
+        { id: 7, icon: "📱", label: "Скроллинг", type: "trap", jump: -3, msg: "Синий свет экрана разрушил мелатонин! Вернись на 3 клетки назад." },
+        { id: 8, icon: "🚿", label: "Тёплый душ" },
+        { id: 9, icon: "📵", label: "Без гаджетов", type: "bonus", jump: 2, msg: "Правило «Цифрового заката» за 30 мин до сна! +2 клетки вперёд." },
+        { id: 10, icon: "🌑", label: "Темнота" },
+        { id: 11, icon: "🎮", label: "Игра в 01:00", type: "trap", jump: -3, msg: "Засиделся в игре после полуночи! Откат на 3 клетки назад." },
+        { id: 12, icon: "💤", label: "Глубокий сон" },
+        { id: 13, icon: "🧠", label: "Память +100%", type: "bonus", jump: 1, msg: "Успешная консолидация памяти во сне! +1 клетка вперёд." },
+        { id: 14, icon: "⏰", label: "Джетлаг", type: "trap", jump: -2, msg: "Спал до обеда в воскресенье и сбил режим! -2 клетки назад." },
+        { id: 15, icon: "✨", label: "5 циклов сна" },
+        { id: 16, icon: "☀️", label: "Финиш!", type: "finish" }
+    ];
+
+    let playerPos = 1, turns = 0;
+
+    function renderBoard() {
+        const grid = document.getElementById('board-grid');
+        grid.innerHTML = '';
+        boardCells.forEach(c => {
+            const div = document.createElement('div');
+            div.className = `cell ${c.type || ''} ${c.id === playerPos ? 'active-player' : ''}`;
+            div.innerHTML = `
+                <span class="cell-num">${c.id}</span>
+                <span class="cell-icon">${c.icon}</span>
+                <span>${c.label}</span>
+                ${c.id === playerPos ? '<span class="player-token">🧑‍🎓</span>' : ''}
+            `;
+            grid.appendChild(div);
+        });
+        document.getElementById('b-pos').innerText = `${playerPos} / 16`;
+        document.getElementById('b-turns').innerText = turns;
+    }
+
+    function rollDice() {
+        if (playerPos >= 16) {
+            playerPos = 1; turns = 0;
+            document.getElementById('b-roll-btn').innerText = "🎲 Бросить кубик";
+            document.getElementById('b-status').innerText = "Новая партия! Бросай кубик.";
+            renderBoard();
+            return;
+        }
+
+        const roll = Math.floor(Math.random() * 4) + 1; // Кубик 1–4 для динамичной игры
+        turns++;
+        document.getElementById('b-dice').innerText = `🎲 ${roll}`;
+        playerPos = Math.min(16, playerPos + roll);
+
+        let statusMsg = `Выпало ${roll}. Переход на клетку ${playerPos}. `;
+        const cell = boardCells[playerPos - 1];
+
+        if (cell.jump) {
+            playerPos = Math.max(1, Math.min(16, playerPos + cell.jump));
+            statusMsg += cell.msg;
+        } else if (playerPos === 16) {
+            statusMsg = `🏆 Победа за ${turns} ходов! Ты соблюдал гигиену сна, выспался 9 часов и пришёл в школу полным сил!`;
+            document.getElementById('b-roll-btn').innerText = "Сыграть заново 🔄";
+        } else {
+            statusMsg += `Клетка «${cell.label}». Продолжай ход!`;
+        }
+
+        document.getElementById('b-status').innerText = statusMsg;
+        renderBoard();
+    }
+
+    // --- 4. КАЛЬКУЛЯТОР СНА ---
+    function calculateSleep() {
+        const wakeVal = document.getElementById('wake-time').value;
+        const ageClass = document.getElementById('age-group').value;
+        if (!wakeVal) return;
+
+        const [wH, wM] = wakeVal.split(':').map(Number);
+        const wakeMinutes = wH * 60 + wM;
+
+        const durations = ageClass === "6" ? [
+            { label: "Оптимально для 6–7 кл. (6,5 циклов / 9 ч 45 мин)", mins: 585 + 15 },
+            { label: "Норма ВОЗ (6 циклов / 9 часов сна)", mins: 540 + 15 },
+            { label: "Минимум (5,5 циклов / 8 ч 15 мин)", mins: 495 + 15 }
+        ] : [
+            { label: "Идеально (6 циклов / 9 часов сна)", mins: 540 + 15 },
+            { label: "Норма для 8–11 кл. (8 ч 30 мин сна)", mins: 510 + 15 },
+            { label: "Минимум (5 циклов / 7 ч 30 мин сна)", mins: 450 + 15 }
+        ];
+
+        let html = `<p style="margin-bottom:8px;">Чтобы проснуться бодрым в <b>${wakeVal}</b> (+15 мин на засыпание), ложись спать в:</p>`;
+        durations.forEach(d => {
+            let bedMins = wakeMinutes - d.mins;
+            if (bedMins < 0) bedMins += 24 * 60;
+            const bH = String(Math.floor(bedMins / 60)).padStart(2, '0');
+            const bM = String(Math.floor(bedMins % 60)).padStart(2, '0');
+            html += `<div style="margin-bottom:8px;">
+                        <span class="time-badge">${bH}:${bM}</span>
+                        <span style="font-size:0.82rem; color:var(--text-muted);">${d.label}</span>
+                     </div>`;
+        });
+        html += `<p style="font-size:0.8rem; color:#86efac; margin-top:6px;">📵 Отложи смартфон за 30–60 минут до выбранного времени!</p>`;
+
+        const out = document.getElementById('calc-output');
+        out.innerHTML = html;
+        out.style.display = 'block';
+    }
+
+    // Запуск при старте
+    loadQuestion();
+    renderBoard();
+</script>
+</body>
+</html>
